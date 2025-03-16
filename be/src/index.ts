@@ -1,12 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-import client from "./db/db";
 
 app.use(cors());
 app.use(express.json());
-
-client.connect().then(() => console.log("Connected to PostgreSQL"));
 
 const todoRoutes = require("./routes/todo");
 

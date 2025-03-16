@@ -8,24 +8,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const { Router } = require("express");
-const router = new Router();
-const db_1 = __importDefault(require("../db/db"));
+const express = require("express");
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+const router = express.Router();
 router.post("/add", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { task } = req.body;
-    const insetQuery = "INSERT INTO todo (task) VALUES ($1) RETURNING *";
-    const values = [task];
     try {
-        yield db_1.default.query(insetQuery, values);
+        const list = yield prisma.todo.create({
+            data: {
+                task,
+            },
+        });
+        console.log(list, "v");
         res.status(200).json({
             message: "Task added successfully",
         });
     }
     catch (error) {
+        console.log(error, "error");
         res.status(500).json({
             message: "Error adding task",
         });
@@ -33,9 +35,9 @@ router.post("/add", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 }));
 router.get("/all-list", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield db_1.default.query("SELECT * FROM todo");
+        const list = yield prisma.todo.findMany();
         res.status(200).json({
-            list: result.rows,
+            list,
         });
     }
     catch (error) {
@@ -47,7 +49,11 @@ router.get("/all-list", (req, res) => __awaiter(void 0, void 0, void 0, function
 router.delete("/delete-list/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
-        yield db_1.default.query("DELETE FROM todo WHERE id = $1", [id]);
+        yield prisma.todo.delete({
+            where: {
+                id: Number(id),
+            },
+        });
         res.status(200).json({
             message: "Task deleted successfully",
         });
@@ -62,7 +68,14 @@ router.put("/update-list/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
     const { id } = req.params;
     const { task } = req.body;
     try {
-        yield db_1.default.query("UPDATE todo SET task = $1 WHERE id = $2 RETURNING *", [task, id]);
+        yield prisma.todo.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                task,
+            },
+        });
         res.status(200).json({
             message: "Task updated successfully",
         });
@@ -77,7 +90,14 @@ router.put("/checked/:id", (req, res) => __awaiter(void 0, void 0, void 0, funct
     const { id } = req.params;
     const { checked } = req.body;
     try {
-        yield db_1.default.query("UPDATE todo SET checked = $1 WHERE id = $2 RETURNING *", [checked, id]);
+        yield prisma.todo.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                checked,
+            },
+        });
         res.status(200).json({
             message: "Task updated successfully",
         });

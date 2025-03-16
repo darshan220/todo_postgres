@@ -1,18 +1,23 @@
-const { Router } = require("express");
-const router = new Router();
+const express = require("express");
 import { Request, Response } from "express";
-import client from "../db/db";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const router = express.Router();
 
 router.post("/add", async (req: Request, res: Response) => {
   const { task } = req.body;
-  const insetQuery = "INSERT INTO todo (task) VALUES ($1) RETURNING *";
-  const values = [task];
   try {
-    await client.query(insetQuery, values);
+    const list = await prisma.todo.create({
+      data: {
+        task,
+      },
+    });
+    console.log(list,"v")
     res.status(200).json({
       message: "Task added successfully",
     });
   } catch (error) {
+  console.log(error,"error")
     res.status(500).json({
       message: "Error adding task",
     });
@@ -21,9 +26,9 @@ router.post("/add", async (req: Request, res: Response) => {
 
 router.get("/all-list", async (req: Request, res: Response) => {
   try {
-    const result = await client.query("SELECT * FROM todo");
+    const list = await prisma.todo.findMany();
     res.status(200).json({
-      list: result.rows,
+      list,
     });
   } catch (error) {
     res.status(500).json({
@@ -35,7 +40,11 @@ router.get("/all-list", async (req: Request, res: Response) => {
 router.delete("/delete-list/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    await client.query("DELETE FROM todo WHERE id = $1", [id]);
+    await prisma.todo.delete({
+      where: {
+        id: Number(id),
+      },
+    });
     res.status(200).json({
       message: "Task deleted successfully",
     });
@@ -50,7 +59,14 @@ router.put("/update-list/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { task } = req.body;
   try {
-    await client.query("UPDATE todo SET task = $1 WHERE id = $2 RETURNING *", [task, id]);
+    await prisma.todo.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        task,
+      },
+    });
     res.status(200).json({
       message: "Task updated successfully",
     });
@@ -65,7 +81,14 @@ router.put("/checked/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { checked } = req.body;
   try {
-    await client.query("UPDATE todo SET checked = $1 WHERE id = $2 RETURNING *", [checked, id]);
+    await prisma.todo.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        checked,
+      },
+    });
     res.status(200).json({
       message: "Task updated successfully",
     });
